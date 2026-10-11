@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DATA iOS — Enterprise Crystal Gateway</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SF Pro Font -->
+    <link href="https://fonts.cdnfonts.com/css/sf-pro-display-chrome" rel="stylesheet">
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+            min-height: 100vh;
+            transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Professional Theme Palettes: Dark Mode vs Blue Mode */
+        body.dark-mode {
+            background-color: #030712;
+            color: #f8fafc;
+        }
+        body.blue-mode {
+            background-color: #020817;
+            color: #f0fdf4;
+        }
+
+        /* True Live Background Canvas */
+        #liveCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+        }
+
+        /* Crystal Glass Containers */
+        .crystal-container {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transform: translateZ(0);
+            will-change: transform;
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+        body.dark-mode .crystal-container {
+            background: rgba(10, 15, 28, 0.75);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        body.blue-mode .crystal-container {
+            background: rgba(10, 25, 47, 0.78);
+            border-color: rgba(56, 189, 248, 0.25);
+            box-shadow: 0 30px 60px -12px rgba(2, 132, 199, 0.3), inset 0 1px 0 rgba(56, 189, 248, 0.3);
+        }
+
+        @supports (backdrop-filter: blur(25px)) {
+            body.dark-mode .crystal-container { background: rgba(10, 15, 28, 0.55); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
+            body.blue-mode .crystal-container { background: rgba(10, 25, 47, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
+        }
+
+        /* Apple Liquid Glass Tap Feel */
+        .liquid-tap {
+            transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            transform: translateZ(0);
+            cursor: pointer;
+        }
+        .liquid-tap:active {
+            transform: scale(0.94) translateZ(0);
+        }
+
+        .crystal-card {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        body.dark-mode .crystal-card { background: rgba(255, 255, 255, 0.03); }
+        body.blue-mode .crystal-card { background: rgba(56, 189, 248, 0.04); border-color: rgba(56, 189, 248, 0.15); }
+
+        .crystal-card.active {
+            border-color: rgba(16, 185, 129, 0.9);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        body.dark-mode .crystal-card.active { background: rgba(255, 255, 255, 0.08); }
+        body.blue-mode .crystal-card.active { background: rgba(56, 189, 248, 0.14); border-color: #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.35); }
+
+        /* Glossy Apple Buttons */
+        .crystal-gloss-btn {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+        }
+        body.blue-mode .crystal-gloss-btn {
+            background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(56, 189, 248, 0.4);
+        }
+
+        /* Inputs */
+        .crystal-input {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        body.dark-mode .crystal-input { background: rgba(0, 0, 0, 0.75); color: #ffffff; }
+        body.blue-mode .crystal-input { background: rgba(2, 6, 23, 0.8); color: #f0fdf4; border-color: rgba(56, 189, 248, 0.25); }
+        .crystal-input:focus { border-color: #10b981; outline: none; box-shadow: 0 0 15px rgba(16, 185, 129, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.4); }
+        body.blue-mode .crystal-input:focus { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.4); }
+
+        /* Spinner */
+        .spinner {
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-left-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            will-change: transform;
+        }
+        body.blue-mode .spinner { border-color: rgba(56, 189, 248, 0.2); border-left-color: #38bdf8; }
+        .spinner-large { width: 44px; height: 44px; border-width: 3px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="dark-mode flex flex-col items-center justify-between p-4 sm:p-6">
+
+    <!-- Professional Moving Background Canvas -->
+    <canvas id="liveCanvas"></canvas>
+
+    <!-- Header with Dynamic Island & Dark/Blue Mode Switcher -->
+    <header class="w-full max-w-md my-2 flex justify-between items-center space-x-2">
+        <div class="crystal-container rounded-full px-5 py-3 flex justify-between items-center flex-1">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-sm font-bold shadow-inner">
+                    
+                </div>
+                <span class="font-extrabold text-xl tracking-tight">DATA <span class="text-emerald-400 font-light">iOS</span></span>
+            </div>
+            <div class="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Secure Engine</span>
+            </div>
+        </div>
+        <!-- Theme Toggle Button -->
+        <button onclick="toggleTheme()" class="liquid-tap crystal-container rounded-full px-4 py-3.5 flex items-center justify-center text-xs font-black tracking-wider uppercase" title="Switch Theme">
+            <span id="themeLabel">BLUE</span>
+        </button>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="w-full max-w-md crystal-container rounded-[36px] p-5 sm:p-7 space-y-6 my-auto relative overflow-hidden min-h-[480px] flex flex-col justify-center">
+        
+        <!-- Navigation Tab Switcher -->
+        <div id="app-tabs" class="p-1.5 rounded-2xl border border-white/15 grid grid-cols-2 gap-1 text-xs font-bold relative mb-2 bg-black/40 shadow-inner">
+            <button id="tab-lagos" onclick="switchTab('lagos')" class="liquid-tap py-3 rounded-xl transition-all duration-200 bg-white/20 text-white border border-white/30 flex items-center justify-center space-x-1.5 shadow-sm font-black">
+                <span>🏝️</span>
+                <span>Top-Up Portal</span>
+            </button>
+            <button id="tab-ledger" onclick="switchTab('ledger')" class="liquid-tap py-3 rounded-xl transition-all duration-200 text-white opacity-80 hover:opacity-100 flex items-center justify-center space-x-1.5">
+                <span>📊</span>
+                <span>Live Ledger</span>
+            </button>
+        </div>
+
+        <!-- MAIN FORM SCREEN -->
+        <div id="checkout-form-screen" class="space-y-6">
+
+            <!-- LAGOS LIFE TOP UP SECTION -->
+            <div id="section-lagos" class="space-y-5">
+                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/15 text-center space-y-0.5 shadow-inner">
+                    <span class="text-xl">🏝️</span>
+                    <h2 class="text-base font-black">Lagos Life Account</h2>
+                    <p class="text-[11px] opacity-70">Top up your Lagos Life coins & balance instantly.</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-extrabold uppercase tracking-widest opacity-70 pl-1">Lagos Life Username</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 opacity-55 font-bold">@</span>
+                        <input type="text" id="lagosUsername" oninput="handleUsernameInput()" placeholder="username" class="w-full crystal-input rounded-2xl pl-9 pr-12 py-3.5 placeholder-slate-500 font-semibold text-base">
+                        
+                        <div class="absolute right-3.5 top-3.5 flex items-center justify-center">
+                            <div id="verifySpinner" class="spinner w-5 h-5 hidden"></div>
+                            <div id="verifyCheck" class="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-xs hidden shadow-md">
+                                ✓
+                            </div>
+                        </div>
+                    </div>
+                    <p id="verifyStatusText" class="text-[11px] font-medium opacity-75 pl-1 h-4"></p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-extrabold uppercase tracking-widest opacity-70 pl-1">Select Lagos Life Package</label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="selectLagosAmount(500, '50 Billion')" class="liquid-tap lagos-amt-btn crystal-card rounded-2xl p-3 text-left flex flex-col justify-between">
+                            <span class="text-[11px] opacity-70 font-semibold">50 Billion</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-sm font-black">50B</span>
+                                <span class="text-xs font-black text-emerald-400">₦500</span>
+                            </div>
+                        </button>
+
+                        <button onclick="selectLagosAmount(1000, '150 Billion')" class="liquid-tap lagos-amt-btn crystal-card rounded-2xl p-3 text-left flex flex-col justify-between">
+                            <span class="text-[11px] opacity-70 font-semibold">150 Billion</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-sm font-black">150B</span>
+                                <span class="text-xs font-black text-emerald-400">₦1,000</span>
+                            </div>
+                        </button>
+
+                        <button onclick="selectLagosAmount(2000, '350 Billion')" class="liquid-tap lagos-amt-btn crystal-card rounded-2xl p-3 text-left flex flex-col justify-between">
+                            <span class="text-[11px] opacity-70 font-semibold">350 Billion</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-sm font-black">350B</span>
+                                <span class="text-xs font-black text-emerald-400">₦2,000</span>
+                            </div>
+                        </button>
+
+                        <button onclick="selectLagosAmount(3000, '550 Billion')" class="liquid-tap lagos-amt-btn crystal-card rounded-2xl p-3 text-left flex flex-col justify-between">
+                            <span class="text-[11px] opacity-70 font-semibold">550 Billion</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-sm font-black">550B</span>
+                                <span class="text-xs font-black text-emerald-400">₦3,000</span>
+                            </div>
+                        </button>
+
+                        <button onclick="selectLagosAmount(5000, '1 Trillion')" class="liquid-tap lagos-amt-btn col-span-2 crystal-card rounded-2xl p-3.5 text-left flex items-center justify-between border-emerald-500/30">
+                            <div>
+                                <span class="text-[11px] text-emerald-400 font-bold uppercase tracking-wider block">Ultimate Life Tier 💎</span>
+                                <span class="text-base font-black">1 Trillion</span>
+                            </div>
+                            <span class="text-sm font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/30">₦5,000</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="proceedToPayment()" class="liquid-tap w-full crystal-gloss-btn font-extrabold py-4 rounded-2xl flex items-center justify-center space-x-2 text-base tracking-wide mt-1">
+                    <span>Proceed to Pay</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+
+            <!-- TRANSACTION LEDGER HISTORY SECTION -->
+            <div id="section-ledger" class="space-y-4 hidden">
+                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/15 text-center space-y-0.5 shadow-inner">
+                    <span class="text-xl">📊</span>
+                    <h2 class="text-base font-black">Live Transaction Ledger</h2>
+                    <p class="text-[11px] opacity-70">Real-time payment verification feed.</p>
+                </div>
+
+                <div class="flex justify-between items-center px-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider opacity-70">Recent Inflows</span>
+                    <button onclick="handleLedgerRefresh()" id="refreshBtn" class="liquid-tap text-[11px] text-emerald-400 font-extrabold hover:underline px-2 py-1 rounded-lg">🔄 Refresh Feed</button>
+                </div>
+
+                <!-- Ledger Container / Refresh Spinner Box -->
+                <div id="ledgerWrapper" class="relative min-h-[290px]">
+                    <div id="ledgerSpinnerBox" class="absolute inset-0 flex-col items-center justify-center space-y-2 bg-black/50 backdrop-blur-md rounded-2xl hidden z-10">
+                        <div class="spinner w-8 h-8"></div>
+                        <span class="text-[11px] text-emerald-400 font-bold tracking-wide">Syncing network...</span>
+                    </div>
+                    <div id="ledgerItemsContainer" class="space-y-2.5 max-h-[290px] overflow-y-auto pr-1">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3.5 SECOND LOADING SCREEN -->
+        <div id="loading-screen" class="hidden flex-col items-center justify-center space-y-4 py-12 text-center">
+            <div class="spinner spinner-large"></div>
+            <p class="text-sm text-emerald-400 font-bold tracking-wide animate-pulse">Please wait</p>
+        </div>
+
+        <!-- BANK TRANSFER CHECKOUT MODAL -->
+        <div id="payment-modal-screen" class="hidden space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs font-bold uppercase tracking-widest opacity-80">Bank Transfer Gateway</span>
+                </div>
+                <button onclick="backToForm()" class="liquid-tap text-xs opacity-70 hover:opacity-100 font-semibold px-2 py-1">← Change</button>
+            </div>
+
+            <!-- Real-Time Date & Time Badge -->
+            <div class="flex justify-between items-center text-[11px] font-mono opacity-80 bg-black/30 px-3.5 py-2 rounded-xl border border-white/10 shadow-inner">
+                <span id="liveDateDisplay">Oct 11, 2026</span>
+                <span id="liveTimeDisplay" class="text-emerald-400 font-bold">03:55:00 PM</span>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/10 text-center shadow-inner">
+                <span class="text-[11px] font-bold opacity-70 uppercase tracking-wider">Amount To Pay</span>
+                <div id="displayPayAmount" class="text-3xl font-black text-emerald-400 mt-0.5">₦0</div>
+                <p id="displayPayDetails" class="text-xs opacity-75 mt-1"></p>
+            </div>
+
+            <div class="p-5 rounded-3xl bg-black/85 border border-emerald-500/40 space-y-4 shadow-2xl relative text-white">
+                <div class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    <span>Bank Name</span>
+                    <span id="assignedBankName" class="text-emerald-400 font-extrabold">Moniepoint</span>
+                </div>
+
+                <div class="space-y-1">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Account Number</span>
+                    <div class="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/10">
+                        <span id="assignedAccountNum" class="text-2xl font-black font-mono text-white tracking-widest">7060516659</span>
+                        <button onclick="copyAccountNum()" class="liquid-tap bg-emerald-500 text-slate-950 px-3 py-1.5 rounded-xl font-bold text-xs hover:bg-emerald-400 flex items-center space-x-1 shadow-md">
+                            <span id="copyBtnText">Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-slate-300 pt-1">
+                    <span class="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Account Name</span>
+                    <span id="assignedAccountName" class="font-extrabold text-white text-right">Ifeanyi Dede Emmanuel</span>
+                </div>
+            </div>
+
+            <button onclick="confirmPaymentAction()" class="liquid-tap w-full crystal-gloss-btn font-extrabold py-4 rounded-2xl flex items-center justify-center space-x-2 text-base tracking-wide">
+                <span>I Have Paid</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+            </button>
+        </div>
+
+        <!-- PAYMENT CONFIRMATION NOTICE SCREEN -->
+        <div id="confirmation-notice-screen" class="hidden text-center space-y-5 py-2">
+            <div class="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-2xl font-black shadow-lg">
+                ✓
+            </div>
+
+            <div class="space-y-1">
+                <h3 class="text-xl font-black">Confirm Payment & Username</h3>
+                <p class="text-xs opacity-80 leading-relaxed px-2">
+                    Click below to securely send your payment receipt and username directly to our WhatsApp support agent for instant credit.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-left space-y-2 shadow-inner">
+                <span class="text-xs font-extrabold text-emerald-400 block">WhatsApp Support Agent</span>
+                <p class="text-xs opacity-85 leading-relaxed">
+                    Your transaction has been added to the Live Ledger as <span class="text-amber-400 font-bold">⏳ Pending</span>. Send proof to complete verification.
+                </p>
+                <a id="whatsappSupportLink" href="#" target="_blank" class="liquid-tap inline-flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-3 rounded-xl font-black text-xs w-full justify-center mt-1 shadow-lg transition">
+                    <span>💬 Confirm via WhatsApp Support</span>
+                </a>
+            </div>
+
+            <button onclick="resetApp()" class="liquid-tap text-xs opacity-70 hover:opacity-100 font-semibold pt-1 px-2 py-1">
+                Return to Homepage
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer Specs -->
+    <footer class="w-full max-w-md my-3 text-center">
+        <div class="crystal-container rounded-2xl py-2.5 px-4 flex justify-around items-center text-[10px] opacity-80 font-semibold tracking-wider">
+            <span>🔒 DATA iOS Encrypted Engine</span>
+            <span>•</span>
+            <span>⚡ Instant Gateway</span>
+        </div>
+    </footer>
+
+    <!-- Interactive JS Engine -->
+    <script>
+        let selectedLagosAmount = 0;
+        let selectedLagosCoins = '';
+        let isUsernameVerified = false;
+        let verifyTimer = null;
+        let currentPaidAmount = '';
+        let currentUsername = '';
+
+        let userPendingTransactions = [];
+
+        const paymentAccounts = [
+            { bank: 'Moniepoint', name: 'Ifeanyi Dede Emmanuel', num: '7060516659' },
+            { bank: 'MoMo PSB', name: 'Ebele Anugha', num: '7060516659' }
+        ];
+
+        // Web Audio API Beep Sound Generator
+        function playBeepSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.18);
+            } catch (e) {
+                console.log('Audio context not allowed yet');
+            }
+        }
+
+        // Real-Time Clock Loop
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('liveDateDisplay').innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('liveTimeDisplay').innerText = now.toLocaleTimeString('en-US');
+        }, 1000);
+
+        // Dark Mode vs Blue Mode Toggle Engine
+        function toggleTheme() {
+            const body = document.body;
+            const label = document.getElementById('themeLabel');
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                body.classList.add('blue-mode');
+                label.innerText = 'DARK';
+            } else {
+                body.classList.remove('blue-mode');
+                body.classList.add('dark-mode');
+                label.innerText = 'BLUE';
+            }
+        }
+
+        // Professional Moving Particle Mesh Background Canvas
+        const canvas = document.getElementById('liveCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let nodes = [];
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        for (let i = 0; i < 50; i++) {
+            nodes.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 2.2 + 1,
+                color: Math.random() > 0.4 ? 'rgba(16, 185, 129, 0.65)' : 'rgba(56, 189, 248, 0.65)',
+                vx: (Math.random() - 0.5) * 0.6,
+                vy: (Math.random() - 0.5) * 0.6
+            });
+        }
+
+        function animateCanvas() {
+            const isBlue = document.body.classList.contains('blue-mode');
+            ctx.fillStyle = isBlue ? '#020817' : '#030712';
+            ctx.fillRect(0, 0, width, height);
+
+            let grad = ctx.createLinearGradient(0, 0, width, height);
+            if (isBlue) {
+                grad.addColorStop(0, 'rgba(3, 37, 65, 0.9)');
+                grad.addColorStop(0.5, 'rgba(8, 47, 73, 0.85)');
+                grad.addColorStop(1, 'rgba(2, 8, 23, 0.98)');
+            } else {
+                grad.addColorStop(0, 'rgba(2, 6, 23, 0.9)');
+                grad.addColorStop(0.5, 'rgba(10, 15, 28, 0.85)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0.98)');
+            }
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    let dx = nodes[i].x - nodes[j].x;
+                    let dy = nodes[i].y - nodes[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 130) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.strokeStyle = isBlue ? `rgba(56, 189, 248, ${0.22 * (1 - dist / 130)})` : `rgba(16, 185, 129, ${0.22 * (1 - dist / 130)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            nodes.forEach(n => {
+                n.x += n.vx;
+                n.y += n.vy;
+
+                if (n.x < 0) n.x = width;
+                if (n.x > width) n.x = 0;
+                if (n.y < 0) n.y = height;
+                if (n.y > height) n.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+                ctx.fillStyle = n.color;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // Switch Navigation Tabs
+        function switchTab(tab) {
+            const lagosTab = document.getElementById('tab-lagos');
+            const ledgerTab = document.getElementById('tab-ledger');
+            
+            const lagosSec = document.getElementById('section-lagos');
+            const ledgerSec = document.getElementById('section-ledger');
+
+            [lagosTab, ledgerTab].forEach(t => {
+                t.className = "liquid-tap py-3 rounded-xl transition-all duration-200 text-white opacity-80 hover:opacity-100 flex items-center justify-center space-x-1.5";
+            });
+
+            lagosSec.classList.add('hidden');
+            ledgerSec.classList.add('hidden');
+
+            if (tab === 'lagos') {
+                lagosTab.className = "liquid-tap py-3 rounded-xl transition-all duration-200 bg-white/20 text-white border border-white/30 flex items-center justify-center space-x-1.5 shadow-sm font-black opacity-100";
+                lagosSec.classList.remove('hidden');
+            } else if (tab === 'ledger') {
+                ledgerTab.className = "liquid-tap py-3 rounded-xl transition-all duration-200 bg-white/20 text-white border border-white/30 flex items-center justify-center space-x-1.5 shadow-sm font-black opacity-100";
+                ledgerSec.classList.remove('hidden');
+                renderLedgerTransactions();
+            }
+        }
+
+        // Mask Username
+        function maskUsername(username) {
+            let clean = username.replace('@', '');
+            if (clean.length <= 4) return '@' + clean;
+            return '@' + clean.substring(0, 4) + '***';
+        }
+
+        // 2-Second Loading State on Refresh
+        function handleLedgerRefresh() {
+            const spinnerBox = document.getElementById('ledgerSpinnerBox');
+            spinnerBox.classList.remove('hidden');
+            spinnerBox.classList.add('flex');
+
+            setTimeout(() => {
+                spinnerBox.classList.add('hidden');
+                spinnerBox.classList.remove('flex');
+                renderLedgerTransactions();
+            }, 2000);
+        }
+
+        // Render Ledger Items
+        function renderLedgerTransactions() {
+            const container = document.getElementById('ledgerItemsContainer');
+            container.innerHTML = '';
+
+            const basePool = [
+                { user: '@jide_la***', amount: '₦1,000 (150B)', time: '2 mins ago', pending: false },
+                { user: '@tunde_mo***', amount: '₦500 (50B)', time: '5 mins ago', pending: false },
+                { user: '@chisom_9***', amount: '₦2,000 (350B)', time: '11 mins ago', pending: false },
+                { user: '@ibrahim_***', amount: '₦5,000 (1 Trillion)', time: '18 mins ago', pending: false },
+                { user: '@blvck_ki***', amount: '₦3,000 (550B)', time: '27 mins ago', pending: false },
+                { user: '@emma_nue***', amount: '₦1,000 (150B)', time: '34 mins ago', pending: false },
+                { user: '@queen_es***', amount: '₦500 (50B)', time: '42 mins ago', pending: false }
+            ];
+
+            let shuffled = [...basePool].sort(() => 0.5 - Math.random()).slice(0, 4);
+            let combinedTx = [...userPendingTransactions, ...shuffled];
+
+            combinedTx.forEach(tx => {
+                let badge = tx.pending 
+                    ? `<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold shadow-sm">⏳ Pending</span>`
+                    : `<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold shadow-sm">✅ Completed</span>`;
+
+                container.innerHTML += `
+                    <div class="crystal-card p-3 rounded-2xl flex items-center justify-between text-xs">
+                        <div class="space-y-0.5">
+                            <span class="font-extrabold text-white block">${tx.user}</span>
+                            <span class="text-[11px] text-emerald-400 font-bold">${tx.amount}</span>
+                            <span class="text-[9px] opacity-50 block">Time: ${tx.time}</span>
+                        </div>
+                        <div class="text-right">
+                            ${badge}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Lagos Life Package Selector
+        function selectLagosAmount(amt, coins) {
+            selectedLagosAmount = amt;
+            selectedLagosCoins = coins;
+            document.querySelectorAll('.lagos-amt-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // Username Verification
+        function handleUsernameInput() {
+            const username = document.getElementById('lagosUsername').value.trim();
+            const spinner = document.getElementById('verifySpinner');
+            const check = document.getElementById('verifyCheck');
+            const statusText = document.getElementById('verifyStatusText');
+
+            clearTimeout(verifyTimer);
+            isUsernameVerified = false;
+            check.classList.add('hidden');
+
+            if (username.length < 3) {
+                spinner.classList.add('hidden');
+                statusText.innerText = '';
+                return;
+            }
+
+            spinner.classList.remove('hidden');
+            statusText.innerText = 'Verifying username...';
+            statusText.className = 'text-[11px] font-medium text-emerald-400 pl-1 h-4 animate-pulse';
+
+            verifyTimer = setTimeout(() => {
+                spinner.classList.add('hidden');
+                check.classList.remove('hidden');
+                statusText.innerText = 'Account Verified: @' + username;
+                statusText.className = 'text-[11px] font-semibold text-emerald-400 pl-1 h-4';
+                isUsernameVerified = true;
+            }, 3000);
+        }
+
+        // Proceed to Payment
+        function proceedToPayment() {
+            const formScreen = document.getElementById('checkout-form-screen');
+            const loadingScreen = document.getElementById('loading-screen');
+            const modalScreen = document.getElementById('payment-modal-screen');
+            const appTabs = document.getElementById('app-tabs');
+
+            const payAmountEl = document.getElementById('displayPayAmount');
+            const payDetailsEl = document.getElementById('displayPayDetails');
+
+            const username = document.getElementById('lagosUsername').value.trim();
+            if (!username) return alert('Please enter your Lagos Life username.');
+            if (!isUsernameVerified) return alert('Please wait for account verification to complete.');
+            if (!selectedLagosAmount) return alert('Please select a Lagos Life package.');
+
+            currentPaidAmount = `₦${selectedLagosAmount.toLocaleString()}`;
+            currentUsername = `@${username}`;
+            payAmountEl.innerText = currentPaidAmount;
+            payDetailsEl.innerText = `Lagos Life ${selectedLagosCoins} Package • @${username}`;
+
+            formScreen.classList.add('hidden');
+            appTabs.classList.add('hidden');
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.classList.add('flex');
+
+            setTimeout(() => {
+                const chosenAccount = paymentAccounts[Math.floor(Math.random() * paymentAccounts.length)];
+                document.getElementById('assignedBankName').innerText = chosenAccount.bank;
+                document.getElementById('assignedAccountName').innerText = chosenAccount.name;
+                document.getElementById('assignedAccountNum').innerText = chosenAccount.num;
+
+                loadingScreen.classList.add('hidden');
+                loadingScreen.classList.remove('flex');
+                modalScreen.classList.remove('hidden');
+            }, 3500);
+        }
+
+        function backToForm() {
+            document.getElementById('payment-modal-screen').classList.add('hidden');
+            document.getElementById('app-tabs').classList.remove('hidden');
+            document.getElementById('checkout-form-screen').classList.remove('hidden');
+        }
+
+        // Copy Account Number
+        function copyAccountNum() {
+            const accNum = document.getElementById('assignedAccountNum').innerText;
+            navigator.clipboard.writeText(accNum);
+            const copyBtnText = document.getElementById('copyBtnText');
+            copyBtnText.innerText = 'Copied!';
+            setTimeout(() => { copyBtnText.innerText = 'Copy'; }, 2000);
+        }
+
+        // Confirm Payment (Triggers Beep Sound)
+        function confirmPaymentAction() {
+            playBeepSound();
+
+            document.getElementById('payment-modal-screen').classList.add('hidden');
+            document.getElementById('confirmation-notice-screen').classList.remove('hidden');
+
+            const masked = maskUsername(currentUsername);
+            userPendingTransactions.unshift({
+                user: `${masked} (You)`,
+                amount: `${currentPaidAmount} (${selectedLagosCoins})`,
+                time: 'Just now',
+                pending: true
+            });
+
+            const msg = encodeURIComponent(`Hello Support, I have made my top-up payment of ${currentPaidAmount} for account username: ${currentUsername} on DATA iOS. Here is my payment receipt confirmation.`);
+            document.getElementById('whatsappSupportLink').href = `https://wa.me/2347060516659?text=${msg}`;
+        }
+
+        // Reset App
+        function resetApp() {
+            document.getElementById('confirmation-notice-screen').classList.add('hidden');
+            document.getElementById('app-tabs').classList.remove('hidden');
+            document.getElementById('checkout-form-screen').classList.remove('hidden');
+            switchTab('lagos');
+        }
+    </script>
+</body>
+</html>
