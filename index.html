@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DATA iOS Pro — Top-up</title>
+<style>
+:root{
+  --ease:cubic-bezier(.2,.9,.3,1.15);
+  --r-xl:34px;--r-lg:24px;--r-md:18px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+}
+:root[data-theme=dark]{--accent:#30d158;--accent-ink:#04200d;--glass:rgba(34,36,46,.36);--glass-hi:rgba(255,255,255,.1);--text:#f5f5f7;--muted:rgba(245,245,247,.62);--field:rgba(0,0,0,.3);--base:#05070d}
+:root[data-theme=blue]{--accent:#0a84ff;--accent-ink:#fff;--glass:rgba(22,50,100,.34);--glass-hi:rgba(160,205,255,.13);--text:#f2f7ff;--muted:rgba(230,240,255,.64);--field:rgba(2,10,35,.35);--base:#030b1f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--text);background:var(--base);min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .6s}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1}
+.wrap{width:100%;max-width:430px}
+
+/* ---------- Liquid glass ---------- */
+.glass{position:relative;background:var(--glass);
+  -webkit-backdrop-filter:blur(30px) saturate(190%) brightness(1.05);backdrop-filter:blur(30px) saturate(190%) brightness(1.05);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.04),0 24px 48px -16px rgba(0,0,0,.55);
+  transition:background .5s,transform .45s var(--ease),box-shadow .3s}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.6),rgba(255,255,255,.04) 38%,rgba(255,255,255,.04) 62%,rgba(255,255,255,.38));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;
+  background:radial-gradient(220px circle at var(--mx,50%) var(--my,0%),var(--glass-hi),transparent 65%)}
+.glass:hover::after{opacity:1}
+
+/* ---------- Header ---------- */
+header{display:flex;gap:10px;align-items:center}
+.bar{flex:1;border-radius:999px;padding:10px 12px 10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.02em}
+.brand i{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-style:normal;font-size:15px;color:var(--accent-ink);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent));box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.brand span{color:var(--accent);font-weight:400}
+.badge{font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent)}
+.round{border:0;color:var(--text);font:600 14px var(--font);height:52px;min-width:64px;padding:0 16px;border-radius:999px;cursor:pointer}
+
+/* ---------- Press feedback ---------- */
+.tap{cursor:pointer;transition:transform .35s var(--ease),background .25s,box-shadow .25s}
+.tap:active{transform:scale(.95)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* ---------- Main card ---------- */
+main{border-radius:var(--r-xl);padding:18px;min-height:500px;display:flex;flex-direction:column;justify-content:center}
+.screen{display:flex;flex-direction:column;gap:18px}
+.screen.in{animation:in .55s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(14px) scale(.97);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+
+.seg{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:999px;background:var(--field);box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.seg button{position:relative;z-index:1;background:none;border:0;color:var(--muted);font:600 14px var(--font);padding:11px 8px;border-radius:999px;cursor:pointer;transition:color .3s}
+.seg button[aria-selected=true]{color:var(--text)}
+.thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:rgba(255,255,255,.2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 16px rgba(0,0,0,.25);transition:transform .5s var(--ease)}
+
+h1{font-size:28px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.sub{color:var(--muted);font-size:14px;line-height:1.45;margin-top:6px}
+label.t{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px 4px}
+
+.field{position:relative}
+.field b{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600}
+input{width:100%;font:600 17px var(--font);color:var(--text);background:var(--field);border:0;border-radius:var(--r-md);padding:16px 48px 16px 38px;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,255,255,.1);transition:box-shadow .25s}
+input::placeholder{color:var(--muted);opacity:.6}
+input:focus{outline:0;box-shadow:inset 0 1px 3px rgba(0,0,0,.4),inset 0 0 0 2px var(--accent),0 0 22px color-mix(in srgb,var(--accent) 35%,transparent)}
+.state{position:absolute;right:15px;top:50%;width:22px;height:22px;transform:translateY(-50%)}
+.spin{border-radius:50%;border:2.5px solid color-mix(in srgb,var(--accent) 25%,transparent);border-top-color:var(--accent);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:translateY(-50%) rotate(360deg)}}
+.big.spin{position:static;width:44px;height:44px;border-width:4px;animation-name:sp2}
+@keyframes sp2{to{transform:rotate(360deg)}}
+.ok{border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:13px;font-weight:800;animation:pop .45s var(--ease)}
+@keyframes pop{from{transform:translateY(-50%) scale(0)}}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0 4px;min-height:18px}
+
+.pk{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pk button{border:0;color:var(--text);text-align:left;font-family:var(--font);padding:14px;border-radius:var(--r-lg);display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,.07);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.07)}
+.pk button:hover{background:rgba(255,255,255,.12)}
+.pk button.on{background:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 2px var(--accent),0 0 28px color-mix(in srgb,var(--accent) 30%,transparent);transform:scale(1.02)}
+.pk small{font-size:13px;color:var(--muted)}
+.pk strong{font-size:20px;letter-spacing:-.02em}
+.pk em{font-style:normal;font-weight:700;color:var(--accent)}
+.pk .wide{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between}
+
+.cta{border:0;width:100%;font:700 17px var(--font);color:var(--accent-ink);padding:17px;border-radius:999px;cursor:pointer;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 78%,#fff),var(--accent));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 12px 28px -8px var(--accent);text-decoration:none;display:inline-block;text-align:center}
+.link{background:none;border:0;color:var(--muted);font:600 14px var(--font);padding:8px 12px;border-radius:12px;cursor:pointer;align-self:center}
+.link:hover{color:var(--text)}
+
+/* ledger */
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 15px;border-radius:var(--r-md);background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.18);animation:in .5s var(--ease) backwards}
+.row b{display:block;font-size:15px}.row span{font-size:13px;color:var(--muted)}
+.tag{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.done{background:color-mix(in srgb,#30d158 22%,transparent);color:#7ff0a0}.wait{background:rgba(255,190,50,.2);color:#ffd36b}
+#list{display:flex;flex-direction:column;gap:9px;max-height:310px;overflow-y:auto;padding:2px;scrollbar-width:none}
+.head{display:flex;justify-content:space-between;align-items:center}
+
+/* pay */
+.panel{padding:16px;border-radius:var(--r-lg);background:var(--field);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.amt{text-align:center}.amt strong{display:block;font-size:42px;letter-spacing:-.04em;color:var(--accent);margin-top:2px}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:7px 0;color:var(--muted)}.kv b{color:var(--text);text-align:right}
+.acct{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0;padding:10px 10px 10px 14px;border-radius:var(--r-md);background:rgba(255,255,255,.07)}
+.acct b{font:700 22px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em}
+.copy{border:0;font:700 13px var(--font);padding:9px 14px;border-radius:999px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.clock{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:0 4px}
+.center{text-align:center;align-items:center}
+.check{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:30px;font-weight:800;color:var(--accent-ink);background:var(--accent);box-shadow:0 0 40px var(--accent);animation:pop2 .6s var(--ease)}
+@keyframes pop2{from{transform:scale(0)}}
+
+footer{border-radius:20px;padding:11px 16px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.4}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:600;z-index:9;pointer-events:none;transition:.45s var(--ease)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:380px){h1{font-size:25px}.amt strong{font-size:36px}.acct b{font-size:19px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<header class="wrap">
+  <div class="bar glass">
+    <div class="brand"><i aria-hidden="true">◐</i>DATA <span>iOS Pro</span></div>
+    <div class="badge">PRO</div>
+  </div>
+  <button class="round glass tap" id="theme" aria-label="Switch theme">Blue</button>
+</header>
+
+<main class="wrap glass">
+  <!-- Form -->
+  <section class="screen" id="form">
+    <div class="seg" role="tablist">
+      <div class="thumb" id="thumb"></div>
+      <button role="tab" aria-selected="true" id="tTop">Top up</button>
+      <button role="tab" aria-selected="false" id="tLed">Ledger</button>
+    </div>
+
+    <div class="screen" id="pTop">
+      <div><h1>Lagos Life top-up</h1><p class="sub">Secure your digital currency instantly.</p></div>
+      <div>
+        <label class="t" for="user">Username</label>
+        <div class="field"><b>@</b><input id="user" autocomplete="off" autocapitalize="none" placeholder="username"><div class="state" id="state"></div></div>
+        <p class="hint" id="hint"></p>
+      </div>
+      <div><label class="t">Package</label><div class="pk" id="pk"></div></div>
+      <button class="cta tap" id="go">Continue to payment</button>
+    </div>
+
+    <div class="screen" id="pLed" hidden>
+      <div><h1>Ledger</h1><p class="sub">Recent transactions processed through the system.</p></div>
+      <div class="head"><span class="sub" style="margin:0">Recent top-ups</span><button class="link tap" id="refresh">Refresh</button></div>
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <section class="screen center" id="loading" hidden style="padding:70px 0"><div class="spin big"></div><p class="sub">Preparing your checkout…</p></section>
+
+  <!-- Pay -->
+  <section class="screen" id="pay" hidden>
+    <div class="head"><h1 style="font-size:22px">Bank transfer</h1><button class="link tap" id="back">Change</button></div>
+    <div class="clock"><span id="d"></span><span id="t"></span></div>
+    <div class="panel amt"><span class="sub" style="margin:0">Amount</span><strong id="amt">₦0</strong><p class="sub" id="det"></p></div>
+    <div class="panel">
+      <div class="kv">Bank<b id="bankName">Moniepoint</b></div>
+      <div class="acct"><b id="acctNum">7060516659</b><button class="copy tap" id="copy">Copy</button></div>
+      <div class="kv">Account name<b id="acctName">Ifeanyi dede</b></div>
+    </div>
+    <p class="sub center" style="text-align:center">Please transfer the exact amount shown above.</p>
+    <button class="cta tap" id="paid">I've paid</button>
+  </section>
+
+  <!-- Done -->
+  <section class="screen center" id="done" hidden>
+    <div class="check">✓</div>
+    <div><h1>Payment Submitted</h1><p class="sub" id="doneText">For fast processing, message support with your receipt.</p></div>
+    <a class="cta tap" id="waLink" href="#" target="_blank">Chat Support on WhatsApp</a>
+  </section>
+</main>
+
+<footer class="wrap glass">DATA iOS Pro — Secure top-up gateway.</footer>
+<div class="toast glass" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const PK=[[500,'50B','50 billion'],[1000,'150B','150 billion'],[2000,'350B','350 billion'],[3000,'550B','550 billion'],[5000,'1T','1 trillion']];
+let pick=null,verified=false,vt,mine=[];
+
+// Randomly alternate bank details on checkout
+const ACCOUNTS=[
+  {bank:"Moniepoint", num:"7060516659", name:"Ifeanyi dede"},
+  {bank:"Momo PSB", num:"7060516659", name:"Ebele anugha"}
+];
+
+/* glass light follows pointer */
+document.addEventListener('pointermove',e=>{const g=e.target.closest('.glass');if(!g)return;const r=g.getBoundingClientRect();g.style.setProperty('--mx',e.clientX-r.left+'px');g.style.setProperty('--my',e.clientY-r.top+'px')},{passive:true});
+
+/* toast */
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400)}
+
+/* screens */
+const S=['form','loading','pay','done'];
+function go(id){S.forEach(s=>$('#'+s).hidden=s!==id);const e=$('#'+id);e.classList.remove('in');void e.offsetWidth;e.classList.add('in')}
+
+/* tabs */
+function tab(i){$('#thumb').style.transform=`translateX(${i*100}%)`;$('#tTop').setAttribute('aria-selected',i==0);$('#tLed').setAttribute('aria-selected',i==1);
+  $('#pTop').hidden=i==1;$('#pLed').hidden=i==0;const p=i?$('#pLed'):$('#pTop');p.classList.remove('in');void p.offsetWidth;p.classList.add('in');if(i)ledger()}
+$('#tTop').onclick=()=>tab(0);$('#tLed').onclick=()=>tab(1);
+
+/* packages */
+PK.forEach((p,i)=>{const b=document.createElement('button');b.className='tap'+(i==4?' wide':'');
+  b.innerHTML=i==4?`<div><small>Top tier</small><br><strong>1 trillion</strong></div><em>₦5,000</em>`:`<small>${p[2]}</small><div style="display:flex;justify-content:space-between;align-items:baseline"><strong>${p[1]}</strong><em>₦${p[0].toLocaleString()}</em></div>`;
+  b.onclick=()=>{pick=p;document.querySelectorAll('.pk button').forEach(x=>x.classList.remove('on'));b.classList.add('on')};$('#pk').append(b)});
+
+/* username check */
+$('#user').oninput=e=>{const v=e.target.value.trim(),st=$('#state'),h=$('#hint');clearTimeout(vt);verified=false;st.className='state';st.textContent='';
+  if(v.length<3){h.textContent='';return}
+  st.className='state spin';h.textContent='Verifying username…';
+  vt=setTimeout(()=>{st.className='state ok';st.textContent='✓';h.textContent='Verified account: @'+v;verified=true},1000)};
+
+/* checkout */
+$('#go').onclick=()=>{const u=$('#user').value.trim();
+  if(!u)return toast('Enter a username first');
+  if(!verified)return toast('Wait for verification to finish');
+  if(!pick)return toast('Choose a package');
+  
+  // Pick random bank details
+  const acc=ACCOUNTS[Math.floor(Math.random()*ACCOUNTS.length)];
+  $('#bankName').textContent=acc.bank;
+  $('#acctNum').textContent=acc.num;
+  $('#acctName').textContent=acc.name;
+
+  $('#amt').textContent='₦'+pick[0].toLocaleString();$('#det').textContent=`${pick[2]} package for @${u}`;
+  go('loading');setTimeout(()=>go('pay'),1400)};
+$('#back').onclick=()=>go('form');
+$('#copy').onclick=()=>{
+  const num=$('#acctNum').textContent;
+  navigator.clipboard&&navigator.clipboard.writeText(num).catch(()=>{});
+  $('#copy').textContent='Copied';
+  setTimeout(()=>$('#copy').textContent='Copy',1800);
+};
+$('#paid').onclick=()=>{
+  const u=$('#user').value.trim();
+  const amtText = '₦' + pick[0].toLocaleString();
+  mine.unshift({u:'@'+u.slice(0,4)+'*** (you)',a:`${amtText} · ${pick[1]}`,t:'Just now',p:1});
+  
+  // Construct dynamic WhatsApp message link
+  const msg = encodeURIComponent(`Hello Support, I have made my top-up payment of ${amtText} for account username: @${u} on DATA iOS. Here is my payment receipt confirmation.`);
+  $('#waLink').href = `https://wa.me/2347060516659?text=${msg}`;
+  
+  go('done');
+};
+
+/* ledger */
+const POOL=[['@jide_***','₦1,000 · 150B'],['@tunde_***','₦500 · 50B'],['@chisom_***','₦2,000 · 350B'],['@ibrahim_***','₦5,000 · 1T'],['@blvck_***','₦3,000 · 550B'],['@emma_***','₦1,000 · 150B'],['@queen_***','₦500 · 50B']];
+function ledger(){const rows=[...mine,...[...POOL].sort(()=>Math.random()-.5).slice(0,4).map((p,i)=>({u:p[0],a:p[1],t:[2,6,13,24][i]+' min ago',p:0}))];
+  $('#list').innerHTML=rows.map((r,i)=>`<div class="row" style="animation-delay:${i*60}ms"><div><b>${r.u}</b><span>${r.a} · ${r.t}</span></div><span class="tag ${r.p?'wait':'done'}">${r.p?'Pending':'Completed'}</span></div>`).join('')}
+$('#refresh').onclick=()=>{$('#list').style.opacity=.3;setTimeout(()=>{ledger();$('#list').style.opacity=1},700)};
+$('#list').style.transition='opacity .3s';
+
+/* clock */
+setInterval(()=>{const n=new Date();$('#d').textContent=n.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});$('#t').textContent=n.toLocaleTimeString('en-US')},1000);
+
+/* theme */
+const THEMES={dark:{base:'#05070d',orbs:['#30d158','#0a84ff','#5e5ce6','#64d2ff','#bf5af2']},blue:{base:'#030b1f',orbs:['#0a84ff','#64d2ff','#5e5ce6','#32ade6','#0040dd']}};
+let theme='dark';
+$('#theme').onclick=()=>{theme=theme=='dark'?'blue':'dark';document.documentElement.dataset.theme=theme;$('#theme').textContent=theme=='dark'?'Blue':'Dark'};
+
+/* live background: drifting light orbs */
+const cv=$('#bg'),cx=cv.getContext('2d');let W,H,run=true;
+const seeds=[...Array(5)].map((_,i)=>({a:Math.random()*6,s:.12+Math.random()*.14,r:.34+Math.random()*.2,ox:.2+i*.16,oy:.2+((i*37)%10)/14}));
+function size(){const k=Math.min(devicePixelRatio||1,1.5)*.5;W=cv.width=innerWidth*k;H=cv.height=innerHeight*k}
+addEventListener('resize',size);size();
+const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function frame(ms){const t=ms/1000,T=THEMES[theme];
+  cx.globalCompositeOperation='source-over';cx.fillStyle=T.base;cx.fillRect(0,0,W,H);cx.globalCompositeOperation='lighter';
+  seeds.forEach((o,i)=>{const x=(o.ox+Math.sin(t*o.s+o.a)*.28)*W,y=(o.oy+Math.cos(t*o.s*1.3+o.a)*.3)*H,r=o.r*Math.max(W,H);
+    const g=cx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,T.orbs[i]+'66');g.addColorStop(1,T.orbs[i]+'00');cx.fillStyle=g;cx.fillRect(0,0,W,H)});
+  if(run&&!still)requestAnimationFrame(frame)}
+document.addEventListener('visibilitychange',()=>{run=!document.hidden;if(run)requestAnimationFrame(frame)});
+requestAnimationFrame(frame);
+$('#form').classList.add('in');
+</script>
+</body>
+</html>
